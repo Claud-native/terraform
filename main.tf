@@ -230,3 +230,7 @@ resource "aws_security_group" "private" {
 module "waf" {
   source = "./services/waf"
 }
+
+# module "wireguard" {
+#   source = "./services/wireguard"
+# }
