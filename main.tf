@@ -226,23 +226,7 @@ resource "aws_security_group" "private" {
   }
 }
 
-# # Modules
-# module "web" {
-#   source = "./backend/web"
-# }
-
-# module "api" {
-#   source = "./backend/api"
-# }
-
-# module "db" {
-#   source = "./backend/db"
-# }
-
-# module "wireguard" {
-#   source = "./backend/wireguard"
-# }
-
-# module "nextcloud" {
-#   source = "./backend/nextcloud"
-# }
+# Modules
+module "waf" {
+  source = "./services/waf"
+}
