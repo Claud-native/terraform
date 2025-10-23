@@ -42,10 +42,11 @@ resource "aws_lb" "web" {
 # TARGET GROUP para contenedores/instancias web
 # ========================================
 resource "aws_lb_target_group" "web" {
-  name     = "web-target-group"
-  port     = 80
-  protocol = "HTTP"
-  vpc_id   = var.vpc_id
+  name        = "web-tg-ip"  # Nombre cambiado para forzar recreación
+  port        = 80
+  protocol    = "HTTP"
+  vpc_id      = var.vpc_id
+  target_type = "ip"  # Necesario para ECS Fargate con awsvpc
 
   # Health check configuration
   health_check {
@@ -68,6 +69,11 @@ resource "aws_lb_target_group" "web" {
 
   # Deregistration delay
   deregistration_delay = 30
+
+  # Lifecycle: crear el nuevo antes de destruir el viejo
+  lifecycle {
+    create_before_destroy = true
+  }
 
   tags = {
     Name = "web-target-group"
