@@ -29,15 +29,28 @@ resource "aws_vpc" "main" {
 # SUBNETS
 # ========================================
 
-# Subnet Pública
-resource "aws_subnet" "public" {
+# Subnet Pública 1 (AZ: us-east-1a)
+resource "aws_subnet" "public_1" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.1.0/24"
   availability_zone       = "us-east-1a"
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "public-subnet"
+    Name = "public-subnet-1"
+    Type = "Public"
+  }
+}
+
+# Subnet Pública 2 (AZ: us-east-1b)
+resource "aws_subnet" "public_2" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.3.0/24"
+  availability_zone       = "us-east-1b"
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name = "public-subnet-2"
     Type = "Public"
   }
 }
@@ -84,7 +97,7 @@ resource "aws_eip" "nat" {
 # ========================================
 resource "aws_nat_gateway" "nat" {
   allocation_id = aws_eip.nat.id
-  subnet_id     = aws_subnet.public.id
+  subnet_id     = aws_subnet.public_1.id
 
   tags = {
     Name = "main-nat-gateway"
@@ -125,9 +138,15 @@ resource "aws_route_table" "private" {
   }
 }
 
-# Asociación Route Table - Subnet Pública
-resource "aws_route_table_association" "public" {
-  subnet_id      = aws_subnet.public.id
+# Asociación Route Table - Subnet Pública 1
+resource "aws_route_table_association" "public_1" {
+  subnet_id      = aws_subnet.public_1.id
+  route_table_id = aws_route_table.public.id
+}
+
+# Asociación Route Table - Subnet Pública 2
+resource "aws_route_table_association" "public_2" {
+  subnet_id      = aws_subnet.public_2.id
   route_table_id = aws_route_table.public.id
 }
 
@@ -229,6 +248,22 @@ resource "aws_security_group" "private" {
 # Modules
 module "waf" {
   source = "./services/waf"
+}
+
+module "web" {
+  source = "./services/web"
+
+  vpc_id             = aws_vpc.main.id
+  public_subnet_ids  = [aws_subnet.public_1.id, aws_subnet.public_2.id]
+  security_group_id  = aws_security_group.public.id
+}
+
+# ========================================
+# ASOCIAR WAF CON ALB
+# ========================================
+resource "aws_wafv2_web_acl_association" "web_alb" {
+  resource_arn = module.web.alb_arn
+  web_acl_arn  = module.waf.waf_web_acl_arn
 }
 
 # module "wireguard" {
