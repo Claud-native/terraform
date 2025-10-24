@@ -49,7 +49,7 @@ resource "aws_ecs_task_definition" "web" {
   container_definitions = jsonencode([
     {
       name      = "web-container"
-      image     = "nginxdemos/hello:latest"  # Imagen de nginx con p�gina de prueba
+      image     = "975049956608.dkr.ecr.us-east-1.amazonaws.com/react/web:latest"
       essential = true
 
       portMappings = [
