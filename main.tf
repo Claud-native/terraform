@@ -250,12 +250,21 @@ module "waf" {
   source = "./services/waf"
 }
 
+module "api" {
+  source = "./services/api"
+
+  vpc_id              = aws_vpc.main.id
+  private_subnet_ids  = [aws_subnet.private.id]
+  security_group_id   = aws_security_group.private.id
+}
+
 module "web" {
   source = "./services/web"
 
   vpc_id             = aws_vpc.main.id
   public_subnet_ids  = [aws_subnet.public_1.id, aws_subnet.public_2.id]
   security_group_id  = aws_security_group.public.id
+  api_url            = module.api.nlb_dns_name
 }
 
 # ========================================

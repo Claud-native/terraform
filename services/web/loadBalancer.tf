@@ -18,6 +18,11 @@ variable "security_group_id" {
   type        = string
 }
 
+variable "api_url" {
+  description = "URL of the API (NLB DNS)"
+  type        = string
+}
+
 # ========================================
 # APPLICATION LOAD BALANCER
 # ========================================
