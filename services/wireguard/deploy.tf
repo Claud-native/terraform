@@ -1,10 +1,15 @@
-locals {
-  wg_iface = "wg0"
+data "aws_ami" "ubuntu" {
+  most_recent = true
+  owners      = [var.ubuntu_ami_owner]
+  filter {
+    name   = "name"
+    values = [var.ubuntu_ami_name]
+  }
 }
 
-resource "aws_security_group" "wireguard_sg" {
-  name        = "wireguard-sg"
-  description = "Allow WireGuard UDP and SSH"
+resource "aws_security_group" "wg_sg" {
+  name        = "wg-sg"
+  description = "Security group for WireGuard EC2"
   vpc_id      = var.vpc_id
 
   ingress {
@@ -16,7 +21,7 @@ resource "aws_security_group" "wireguard_sg" {
   }
 
   ingress {
-    description = "SSH admin"
+    description = "SSH"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
@@ -30,42 +35,23 @@ resource "aws_security_group" "wireguard_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = {
-    Name = "wireguard-security-group"
-  }
+  tags = { Name = "wg-sg" }
 }
 
-# Elastic IP for the WireGuard instance (so public IP is stable)
-resource "aws_eip" "wg_eip" {
-  domain = "vpc"
-}
-
-resource "aws_instance" "wireguard" {
-  ami                    = var.ami
+resource "aws_instance" "wg" {
+  ami                    = data.aws_ami.ubuntu.id
   instance_type          = var.instance_type
   subnet_id              = var.public_subnet_id
-  vpc_security_group_ids = [aws_security_group.wireguard_sg.id]
-  associate_public_ip_address = true
+  vpc_security_group_ids = [aws_security_group.wg_sg.id]
   key_name               = var.key_name != "" ? var.key_name : null
+  user_data              = templatefile("${path.module}/user_data.sh.tpl", { wireguard_port = tostring(var.wireguard_port) })
 
-  user_data = templatefile("${path.module}/user_data.sh.tpl", {
-    iface       = local.wg_iface
-    listen_port = tostring(var.wireguard_port)
-  })
+  iam_instance_profile = var.instance_profile_name != "" ? var.instance_profile_name : null
 
-  tags = {
-    Name = "wireguard-server"
-  }
-
-  provisioner "local-exec" {
-    command = "echo WireGuard instance created: ${self.public_ip}"
-  }
-
-  depends_on = [aws_eip.wg_eip]
+  tags = { Name = "wireguard-server" }
 }
 
-# Associate EIP to the instance
-resource "aws_eip_association" "wg_eip_assoc" {
-  instance_id   = aws_instance.wireguard.id
-  allocation_id = aws_eip.wg_eip.id
+resource "aws_eip" "wg_eip" {
+  instance = aws_instance.wg.id
+  domain   = "vpc"
 }

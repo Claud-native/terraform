@@ -1,63 +1,52 @@
 #!/bin/bash
-set -e
+set -eux
 
-# Install WireGuard (Amazon Linux 2 / RHEL-family compatible)
-if command -v yum >/dev/null 2>&1; then
-  yum update -y
-  amazon-linux-extras install -y epel
-  yum install -y wireguard-tools wireguard-dkms qrencode
-elif command -v apt-get >/dev/null 2>&1; then
-  apt-get update -y
-  apt-get install -y wireguard qrencode
-fi
+# Install WireGuard on Ubuntu Jammy
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+apt-get install -y --no-install-recommends wireguard iproute2 curl
 
-WG_IFACE="${iface}"
-WG_PORT=${listen_port}
-
-# Generate server keys
 umask 077
-SERVER_PRIV_KEY=$(wg genkey)
-SERVER_PUB_KEY=$(echo "$SERVER_PRIV_KEY" | wg pubkey)
+# Generate keys
+SERVER_PRIVKEY=$(wg genkey)
+SERVER_PUBKEY=$(echo "$SERVER_PRIVKEY" | wg pubkey)
+CLIENT_PRIVKEY=$(wg genkey)
+CLIENT_PUBKEY=$(echo "$CLIENT_PRIVKEY" | wg pubkey)
 
-CLIENT_PRIV_KEY=$(wg genkey)
-CLIENT_PUB_KEY=$(echo "$CLIENT_PRIV_KEY" | wg pubkey)
+# Template variable assigned to shell variable
+WG_PORT=${wireguard_port}
+SERVER_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 || hostname -I | awk '{print $1}')
 
-SERVER_IP4="10.10.0.1/24"
-CLIENT_IP4="10.10.0.2/32"
-
-mkdir -p /etc/wireguard
-cat >/etc/wireguard/${WG_IFACE}.conf <<EOF
+cat > /etc/wireguard/wg0.conf <<EOF
 [Interface]
-Address = ${SERVER_IP4}
-ListenPort = ${WG_PORT}
-PrivateKey = ${SERVER_PRIV_KEY}
-
-[Peer]
-PublicKey = ${CLIENT_PUB_KEY}
-AllowedIPs = ${CLIENT_IP4}
+Address = 10.0.0.1/24
+ListenPort = $${WG_PORT}
+PrivateKey = $${SERVER_PRIVKEY}
+PostUp = sysctl -w net.ipv4.ip_forward=1; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+PostDown = iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
 EOF
 
-cat >/etc/wireguard/client.conf <<EOF
+cat > /etc/wireguard/client.conf <<EOF
 [Interface]
-PrivateKey = ${CLIENT_PRIV_KEY}
-Address = ${CLIENT_IP4}
+PrivateKey = $${CLIENT_PRIVKEY}
+Address = 10.0.0.2/24
 DNS = 1.1.1.1
 
 [Peer]
-PublicKey = ${SERVER_PUB_KEY}
-Endpoint = $(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):${WG_PORT}
+PublicKey = $${SERVER_PUBKEY}
 AllowedIPs = 0.0.0.0/0
+Endpoint = $${SERVER_IP}:$${WG_PORT}
 PersistentKeepalive = 25
 EOF
 
-chmod 600 /etc/wireguard/${WG_IFACE}.conf /etc/wireguard/client.conf
+chmod 600 /etc/wireguard/*.conf
+systemctl enable wg-quick@wg0
+systemctl start wg-quick@wg0
 
-systemctl enable --now wg-quick@${WG_IFACE}
-
-# Save client config to /home/ec2-user for retrieval
-if id ec2-user >/dev/null 2>&1; then
-  cp /etc/wireguard/client.conf /home/ec2-user/wireguard-client.conf
-  chown ec2-user:ec2-user /home/ec2-user/wireguard-client.conf
+# Copy client config to home for retrieval
+if id ubuntu >/dev/null 2>&1; then
+  cp /etc/wireguard/client.conf /home/ubuntu/wireguard-client.conf
+  chown ubuntu:ubuntu /home/ubuntu/wireguard-client.conf
+else
+  cp /etc/wireguard/client.conf /root/wireguard-client.conf
 fi
-
-echo "WireGuard setup complete"

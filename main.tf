@@ -232,13 +232,12 @@ module "waf" {
 }
 
 module "wireguard" {
-  source             = "./services/wireguard/ecs"
-  vpc_id             = aws_vpc.main.id
-  public_subnet_ids  = [aws_subnet.public.id]
-  allowed_ssh_cidr   = "0.0.0.0/0"
-  instance_type      = "t3.small"
-  desired_capacity   = 1
-  max_capacity       = 1
-  wireguard_port     = 51820
-  container_image    = "ghcr.io/linuxserver/wireguard:latest"
+  source               = "./services/wireguard"
+  vpc_id               = aws_vpc.main.id
+  public_subnet_id     = aws_subnet.public.id
+  allowed_ssh_cidr     = "0.0.0.0/0"
+  instance_type        = "t3.small"
+  key_name             = "vockey"
+  wireguard_port       = 51820
+  instance_profile_name = var.instance_profile_name
 }
