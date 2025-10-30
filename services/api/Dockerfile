@@ -4,6 +4,7 @@ WORKDIR /build
 RUN apk add --no-cache git
 RUN git clone https://github.com/Claud-native/educloudbackend.git app
 WORKDIR /build/app
+RUN cp .env.example .env || echo "No .env.example found, skipping"
 RUN chmod +x ./gradlew
 RUN ./gradlew clean build -x test
 

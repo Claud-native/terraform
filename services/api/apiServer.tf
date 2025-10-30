@@ -52,6 +52,40 @@ resource "aws_ecs_task_definition" "api" {
       image     = "975049956608.dkr.ecr.us-east-1.amazonaws.com/spring/api:latest"
       essential = true
 
+      environment = [
+        {
+          name  = "SPRING_DATASOURCE_URL"
+          value = "jdbc:mysql://${var.db_endpoint}:${var.db_port}/${var.db_name}"
+        },
+        {
+          name  = "SPRING_DATASOURCE_USERNAME"
+          value = var.db_username
+        },
+        {
+          name  = "SPRING_DATASOURCE_DRIVER_CLASS_NAME"
+          value = "com.mysql.cj.jdbc.Driver"
+        },
+        {
+          name  = "SPRING_JPA_HIBERNATE_DDL_AUTO"
+          value = "update"
+        },
+        {
+          name  = "SPRING_JPA_SHOW_SQL"
+          value = "false"
+        },
+        {
+          name  = "SPRING_PROFILES_ACTIVE"
+          value = "prod"
+        }
+      ]
+
+      secrets = [
+        {
+          name      = "SPRING_DATASOURCE_PASSWORD"
+          valueFrom = "${var.db_secret_arn}:password::"
+        }
+      ]
+
       portMappings = [
         {
           containerPort = 8080
@@ -195,4 +229,9 @@ output "nlb_arn" {
 output "target_group_arn" {
   description = "ARN of the target group"
   value       = aws_lb_target_group.api.arn
+}
+
+output "api_security_group_id" {
+  description = "Security group ID of API ECS tasks"
+  value       = aws_security_group.api_ecs_tasks.id
 }

@@ -55,7 +55,7 @@ resource "aws_subnet" "public_2" {
   }
 }
 
-# Subnet Privada
+# Subnet Privada 1 (AZ: us-east-1a)
 resource "aws_subnet" "private" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.2.0/24"
@@ -63,7 +63,20 @@ resource "aws_subnet" "private" {
   map_public_ip_on_launch = false
 
   tags = {
-    Name = "private-subnet"
+    Name = "private-subnet-1"
+    Type = "Private"
+  }
+}
+
+# Subnet Privada 2 (AZ: us-east-1b) - Para Multi-AZ Aurora
+resource "aws_subnet" "private_2" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.4.0/24"
+  availability_zone       = "us-east-1b"
+  map_public_ip_on_launch = false
+
+  tags = {
+    Name = "private-subnet-2"
     Type = "Private"
   }
 }
@@ -150,9 +163,15 @@ resource "aws_route_table_association" "public_2" {
   route_table_id = aws_route_table.public.id
 }
 
-# Asociación Route Table - Subnet Privada
+# Asociación Route Table - Subnet Privada 1
 resource "aws_route_table_association" "private" {
   subnet_id      = aws_subnet.private.id
+  route_table_id = aws_route_table.private.id
+}
+
+# Asociación Route Table - Subnet Privada 2
+resource "aws_route_table_association" "private_2" {
+  subnet_id      = aws_subnet.private_2.id
   route_table_id = aws_route_table.private.id
 }
 
@@ -256,6 +275,23 @@ module "api" {
   vpc_id              = aws_vpc.main.id
   private_subnet_ids  = [aws_subnet.private.id]
   security_group_id   = aws_security_group.private.id
+
+  # Database connection parameters
+  db_endpoint    = module.aurora.aurora_cluster_endpoint
+  db_port        = module.aurora.aurora_port
+  db_name        = module.aurora.database_name
+  db_username    = module.aurora.master_username
+  db_secret_arn  = module.aurora.secret_arn
+}
+
+module "aurora" {
+  source = "./services/aurora"
+
+  vpc_id                 = aws_vpc.main.id
+  private_subnet_ids     = [aws_subnet.private.id, aws_subnet.private_2.id]
+  api_security_group_id  = module.api.api_security_group_id
+  database_name          = "educloud"
+  master_username        = "admin"
 }
 
 module "web" {
