@@ -231,13 +231,43 @@ module "waf" {
   source = "./services/waf"
 }
 
+# ========================================
+# Wireguard EC2 Module
+# ========================================
 module "wireguard" {
-  source               = "./services/wireguard"
-  vpc_id               = aws_vpc.main.id
-  public_subnet_id     = aws_subnet.public.id
-  allowed_ssh_cidr     = "0.0.0.0/0"
-  instance_type        = "t3.small"
-  key_name             = "vockey"
-  wireguard_port       = 51820
-  instance_profile_name = var.instance_profile_name
+  source        = "./services/wireguard"
+  vpc_id        = aws_vpc.main.id
+  ami_id        = "ami-0360c520857e3138f"
+  instance_type = "t3.micro"
+  subnet_id     = aws_subnet.public.id
+  sg_id         = aws_security_group.public.id  
+  name          = "wg-ec2"
 }
+
+# ========================================
+# Nextcloud ECS Module
+# ========================================
+
+# Módulo Nextcloud
+module "nextcloud" {
+  source = "./services/nextcloud"
+
+  task_role_arn      = "arn:aws:iam::637423601326:role/LabRole"
+
+  private_subnet_id  = aws_subnet.private.id
+  private_sg_id      = aws_security_group.private.id
+
+  mariadb_image      = "my-mariadb:latest"
+  nextcloud_image    = "my-nextcloud-s3:latest"
+
+  db_name              = "nextcloud"
+  db_user              = "Almi"
+  db_root_password      = "Almi1234"
+  db_password           = "Almi1234"
+  nextcloud_admin_user  = "Almi"
+  nextcloud_admin_password = "Almi1234"
+  region                = "us-east-1"
+}
+
+
+
