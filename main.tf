@@ -252,13 +252,13 @@ module "wireguard" {
 module "nextcloud" {
   source = "./services/nextcloud"
 
-  task_role_arn      = "arn:aws:iam::637423601326:role/LabRole"
+  task_role_arn      = "arn:aws:iam::704518799449:role/LabRole"
 
   private_subnet_id  = aws_subnet.private.id
   private_sg_id      = aws_security_group.private.id
 
-  mariadb_image      = "my-mariadb:latest"
-  nextcloud_image    = "my-nextcloud-s3:latest"
+  mariadb_image      = "pina123/my-mariadb:latest"
+  nextcloud_image    = "pina123/my-nextcloud-s3:latest"
 
   db_name              = "nextcloud"
   db_user              = "Almi"

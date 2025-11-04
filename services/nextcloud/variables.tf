@@ -1,16 +1,16 @@
 # ==========================
 # Variables
 # ==========================
-#variable "execution_role_arn" {
-#  description = "ARN del rol de ejecución ECS (ya existente)"
-#  type        = string
-#  default     = "arn:aws:iam::637423601326:role/LabRole"
-#}
+variable "execution_role_arn" {
+  description = "ARN del rol de ejecución ECS (ya existente)"
+  type        = string
+  default     = "arn:aws:iam::704518799449:role/LabRole"
+}
 
 variable "task_role_arn" {
   description = "ARN del rol que los containers ECS usarán (ya existente)"
   type        = string
-  default     = "arn:aws:iam::637423601326:role/LabRole" 
+  default     = "arn:aws:iam::704518799449:role/LabRole" 
 }
 
 variable "private_subnet_id" {
@@ -26,13 +26,13 @@ variable "private_sg_id" {
 variable "mariadb_image" {
   description = "Imagen de MariaDB"
   type        = string
-  default     = "my-mariadb:latest"
+  default     = "pina123/my-mariadb:latest"
 }
 
 variable "nextcloud_image" {
   description = "Imagen de Nextcloud"
   type        = string
-  default     = "my-nextcloud-s3:latest"
+  default     = "pina123/my-mariadb:latest"
 }
 
 variable "db_root_password" {

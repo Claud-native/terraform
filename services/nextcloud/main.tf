@@ -65,10 +65,11 @@ resource "aws_ecs_task_definition" "nextcloud" {
   family                   = "nextcloud-task"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
-  cpu                      = "1024"
-  memory                   = "2048"
+  cpu                      = "4 vCPU"
+  memory                   = "10 GB"
 
-  task_role_arn      = var.task_role_arn
+  task_role_arn            = var.task_role_arn
+  execution_role_arn       = var.execution_role_arn 
 
 
   container_definitions = jsonencode([
@@ -91,7 +92,7 @@ resource "aws_ecs_task_definition" "nextcloud" {
       dependsOn = [{ containerName = "db", condition = "START" }]
       portMappings = [{ containerPort = 80, hostPort = 80 }]
       environment = [
-        { name = "MYSQL_HOST", value = "127.0.0.1" },
+        { name = "MYSQL_HOST", value = "db" },
         { name = "MYSQL_DATABASE", value = var.db_name },
         { name = "MYSQL_USER", value = var.db_user },
         { name = "MYSQL_PASSWORD", value = var.db_password },
