@@ -252,7 +252,7 @@ module "wireguard" {
 module "nextcloud" {
   source = "./services/nextcloud"
 
-  task_role_arn      = "arn:aws:iam::704518799449:role/LabRole"
+  task_role_arn      = "arn:aws:iam::891377069738:role/LabRole"
 
   private_subnet_id  = aws_subnet.private.id
   private_sg_id      = aws_security_group.private.id
