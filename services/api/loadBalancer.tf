@@ -1,41 +1,53 @@
 # ========================================
-# NETWORK LOAD BALANCER (INTERNO - RED PRIVADA)
+# APPLICATION LOAD BALANCER (PÚBLICO - RED PÚBLICA)
 # ========================================
 resource "aws_lb" "api" {
-  name               = "api-nlb"
-  internal           = true  # Load balancer INTERNO en red privada
-  load_balancer_type = "network"
-  subnets            = var.private_subnet_ids
+  name               = "api-alb"
+  internal           = false  # Load balancer PÚBLICO para acceso desde internet
+  load_balancer_type = "application"
+  security_groups    = [var.public_security_group_id]
+  subnets            = var.public_subnet_ids
 
   enable_deletion_protection       = false
+  enable_http2                     = true
   enable_cross_zone_load_balancing = true
 
   tags = {
-    Name = "api-network-load-balancer"
-    Type = "Internal"
+    Name = "api-application-load-balancer"
+    Type = "Public"
   }
 }
 
 # ========================================
-# TARGET GROUP para NLB
+# TARGET GROUP para ALB
 # ========================================
 resource "aws_lb_target_group" "api" {
-  name        = "api-tg-ip"
+  name        = "api-tg-alb-ip"
   port        = 8080
-  protocol    = "TCP"  # NLB usa TCP, no HTTP
+  protocol    = "HTTP"  # ALB usa HTTP
   vpc_id      = var.vpc_id
-  target_type = "ip"   # Requerido para Fargate con awsvpc
+  target_type = "ip"    # Requerido para Fargate con awsvpc
 
   health_check {
     enabled             = true
-    protocol            = "TCP"
+    protocol            = "HTTP"
+    path                = "/api/health"
     port                = 8080
     healthy_threshold   = 2
     unhealthy_threshold = 2
     interval            = 30
+    timeout             = 5
+    matcher             = "200"
   }
 
   deregistration_delay = 30
+
+  # Stickiness (sesiones pegajosas)
+  stickiness {
+    type            = "lb_cookie"
+    cookie_duration = 86400  # 1 día
+    enabled         = true
+  }
 
   tags = {
     Name = "api-target-group"
@@ -43,12 +55,12 @@ resource "aws_lb_target_group" "api" {
 }
 
 # ========================================
-# LISTENER para NLB (Puerto 8080)
+# LISTENER HTTP para ALB (Puerto 80)
 # ========================================
 resource "aws_lb_listener" "api" {
   load_balancer_arn = aws_lb.api.arn
-  port              = 8080
-  protocol          = "TCP"
+  port              = 80
+  protocol          = "HTTP"
 
   default_action {
     type             = "forward"
@@ -56,7 +68,7 @@ resource "aws_lb_listener" "api" {
   }
 
   tags = {
-    Name = "api-nlb-listener-8080"
+    Name = "api-alb-listener-80"
   }
 }
 
@@ -65,16 +77,16 @@ resource "aws_lb_listener" "api" {
 # ========================================
 
 # Alarma: Targets no saludables
-resource "aws_cloudwatch_metric_alarm" "api_nlb_unhealthy_targets" {
-  alarm_name          = "api-nlb-unhealthy-targets"
+resource "aws_cloudwatch_metric_alarm" "api_alb_unhealthy_targets" {
+  alarm_name          = "api-alb-unhealthy-targets"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
   metric_name         = "UnHealthyHostCount"
-  namespace           = "AWS/NetworkELB"
+  namespace           = "AWS/ApplicationELB"
   period              = 60
   statistic           = "Average"
   threshold           = 0
-  alarm_description   = "This metric monitors unhealthy targets in API NLB"
+  alarm_description   = "This metric monitors unhealthy targets in API ALB"
   treat_missing_data  = "notBreaching"
 
   dimensions = {
@@ -83,21 +95,21 @@ resource "aws_cloudwatch_metric_alarm" "api_nlb_unhealthy_targets" {
   }
 
   tags = {
-    Name = "api-nlb-unhealthy-targets-alarm"
+    Name = "api-alb-unhealthy-targets-alarm"
   }
 }
 
-# Alarma: Número de conexiones activas
-resource "aws_cloudwatch_metric_alarm" "api_nlb_active_connections" {
-  alarm_name          = "api-nlb-high-active-connections"
+# Alarma: Respuestas 5xx
+resource "aws_cloudwatch_metric_alarm" "api_alb_5xx_errors" {
+  alarm_name          = "api-alb-high-5xx-errors"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
-  metric_name         = "ActiveFlowCount"
-  namespace           = "AWS/NetworkELB"
+  metric_name         = "HTTPCode_Target_5XX_Count"
+  namespace           = "AWS/ApplicationELB"
   period              = 60
   statistic           = "Sum"
-  threshold           = 1000  # Ajustar según necesidades
-  alarm_description   = "This metric monitors high active connections in API NLB"
+  threshold           = 10
+  alarm_description   = "This metric monitors 5xx errors in API ALB"
   treat_missing_data  = "notBreaching"
 
   dimensions = {
@@ -105,6 +117,6 @@ resource "aws_cloudwatch_metric_alarm" "api_nlb_active_connections" {
   }
 
   tags = {
-    Name = "api-nlb-high-connections-alarm"
+    Name = "api-alb-5xx-errors-alarm"
   }
 }

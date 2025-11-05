@@ -2,8 +2,17 @@
 # RANDOM PASSWORD para RDS
 # ========================================
 resource "random_password" "aurora_password" {
-  length  = 16
-  special = true
+  length           = 16
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"
+}
+
+# ========================================
+# RANDOM JWT SECRET (256-bit key)
+# ========================================
+resource "random_password" "jwt_secret" {
+  length  = 64
+  special = false
 }
 
 # ========================================
@@ -28,6 +37,23 @@ resource "aws_secretsmanager_secret_version" "aurora_credentials" {
     port     = 3306
     dbname   = var.database_name
   })
+}
+
+# ========================================
+# SECRETS MANAGER - JWT Secret
+# ========================================
+resource "aws_secretsmanager_secret" "jwt_secret" {
+  name                    = "aurora/jwt-secret"
+  recovery_window_in_days = 0
+
+  tags = {
+    Name = "jwt-secret"
+  }
+}
+
+resource "aws_secretsmanager_secret_version" "jwt_secret" {
+  secret_id     = aws_secretsmanager_secret.jwt_secret.id
+  secret_string = random_password.jwt_secret.result
 }
 
 # ========================================
@@ -206,4 +232,9 @@ output "secret_arn" {
 output "aurora_security_group_id" {
   description = "Security group ID of RDS"
   value       = aws_security_group.aurora.id
+}
+
+output "jwt_secret_arn" {
+  description = "ARN of the JWT secret"
+  value       = aws_secretsmanager_secret.jwt_secret.arn
 }

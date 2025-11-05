@@ -272,9 +272,11 @@ module "waf" {
 module "api" {
   source = "./services/api"
 
-  vpc_id              = aws_vpc.main.id
-  private_subnet_ids  = [aws_subnet.private.id]
-  security_group_id   = aws_security_group.private.id
+  vpc_id                    = aws_vpc.main.id
+  private_subnet_ids        = [aws_subnet.private.id]
+  security_group_id         = aws_security_group.private.id
+  public_subnet_ids         = [aws_subnet.public_1.id, aws_subnet.public_2.id]
+  public_security_group_id  = aws_security_group.public.id
 
   # Database connection parameters
   db_endpoint    = module.aurora.aurora_cluster_endpoint
@@ -282,6 +284,10 @@ module "api" {
   db_name        = module.aurora.database_name
   db_username    = module.aurora.master_username
   db_secret_arn  = module.aurora.secret_arn
+  jwt_secret_arn = module.aurora.jwt_secret_arn
+
+  # CORS configuration - URL del balanceador web
+  cors_web_url   = "http://${module.web.alb_dns_name}"
 }
 
 module "aurora" {
@@ -300,7 +306,7 @@ module "web" {
   vpc_id             = aws_vpc.main.id
   public_subnet_ids  = [aws_subnet.public_1.id, aws_subnet.public_2.id]
   security_group_id  = aws_security_group.public.id
-  api_url            = module.api.nlb_dns_name
+  api_url            = module.api.alb_dns_name
 }
 
 # ========================================
@@ -314,3 +320,22 @@ resource "aws_wafv2_web_acl_association" "web_alb" {
 # module "wireguard" {
 #   source = "./services/wireguard"
 # }
+
+# ========================================
+# OUTPUTS - URLs PÚBLICAS
+# ========================================
+output "web_url" {
+  description = "URL pública de la aplicación web"
+  value       = "http://${module.web.alb_dns_name}"
+}
+
+output "api_url" {
+  description = "URL pública de la API"
+  value       = "http://${module.api.alb_dns_name}"
+}
+
+output "database_endpoint" {
+  description = "Endpoint de la base de datos Aurora (interno)"
+  value       = module.aurora.aurora_cluster_endpoint
+  sensitive   = true
+}

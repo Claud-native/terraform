@@ -54,8 +54,36 @@ resource "aws_ecs_task_definition" "web" {
 
       environment = [
         {
-          name  = "REACT_APP_API_URL"
-          value = "http://${var.api_url}:8080"
+          name  = "VITE_API_BASE_URL"
+          value = "http://${var.api_url}"
+        },
+        {
+          name  = "VITE_RSA_PUBLIC_KEY"
+          value = "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0QFwed5G4KLpGKa9a4GQ\nRZrxRffPBF6yPNrNG5p6wg36CQM8IsoJ5Hwdgq82XPVk9jn1QR4zYbZMIw30TDeH\n+jAcGA2YO6YxPHpa0zvlaE/45wuXUNHhUM07uOP1xowbRyHAAuzYdV1jkTMdCjn9\nfJPP0F796iF5aRs4nxXUF5cVqDUUIlJwBJMa3q2h4lQ+3FGILJBhJzUKk6oRaAvZ\nuEs1ndz+ugLVC1kDwOLG5qRT/zcnPsITVLeWkJ0DXLWqQWlLqlugEJ0ncPON4CuU\nn0yobbJ8aiL/Ymu8FF7DzN1GILL4kGD6Pc/iPvfWdBUDSuhMLGuXyR/CzLy304j1\nfQIDAQAB\n-----END PUBLIC KEY-----"
+        },
+        {
+          name  = "VITE_AES_SECRET_KEY"
+          value = "almi-dev-key-2024"
+        },
+        {
+          name  = "VITE_APP_NAME"
+          value = "EduCloud Platform"
+        },
+        {
+          name  = "VITE_APP_VERSION"
+          value = "1.0.0"
+        },
+        {
+          name  = "VITE_APP_ENV"
+          value = "production"
+        },
+        {
+          name  = "VITE_ENABLE_HEALTH_CHECK"
+          value = "true"
+        },
+        {
+          name  = "VITE_DEBUG_MODE"
+          value = "false"
         }
       ]
 

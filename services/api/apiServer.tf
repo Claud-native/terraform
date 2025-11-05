@@ -49,17 +49,17 @@ resource "aws_ecs_task_definition" "api" {
   container_definitions = jsonencode([
     {
       name      = "api-container"
-      image     = "975049956608.dkr.ecr.us-east-1.amazonaws.com/spring/api:latest"
+      image     = "975049956608.dkr.ecr.us-east-1.amazonaws.com/react/api:latest"
       essential = true
 
       environment = [
         {
-          name  = "SPRING_DATASOURCE_URL"
-          value = "jdbc:mysql://${var.db_endpoint}:${var.db_port}/${var.db_name}"
+          name  = "CORS_ALLOWED_ORIGINS"
+          value = var.cors_web_url
         },
         {
-          name  = "SPRING_DATASOURCE_USERNAME"
-          value = var.db_username
+          name  = "SPRING_DATASOURCE_URL"
+          value = "jdbc:mysql://${var.db_endpoint}:${var.db_port}/${var.db_name}?useSSL=true&requireSSL=true"
         },
         {
           name  = "SPRING_DATASOURCE_DRIVER_CLASS_NAME"
@@ -67,22 +67,46 @@ resource "aws_ecs_task_definition" "api" {
         },
         {
           name  = "SPRING_JPA_HIBERNATE_DDL_AUTO"
-          value = "update"
+          value = "create"
         },
         {
           name  = "SPRING_JPA_SHOW_SQL"
           value = "false"
         },
         {
+          name  = "SPRING_JPA_DATABASE_PLATFORM"
+          value = "org.hibernate.dialect.MySQL8Dialect"
+        },
+        {
+          name  = "SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT"
+          value = "org.hibernate.dialect.MySQL8Dialect"
+        },
+        {
           name  = "SPRING_PROFILES_ACTIVE"
-          value = "prod"
+          value = "production"
+        },
+        {
+          name  = "JWT_EXPIRATION"
+          value = "86400000"
         }
       ]
 
       secrets = [
         {
+          name      = "SPRING_DATASOURCE_USERNAME"
+          valueFrom = "${var.db_secret_arn}:username::"
+        },
+        {
           name      = "SPRING_DATASOURCE_PASSWORD"
           valueFrom = "${var.db_secret_arn}:password::"
+        },
+        {
+          name      = "JWT_SECRET"
+          valueFrom = var.jwt_secret_arn
+        },
+        {
+          name      = "RSA_PRIVATE_KEY"
+          valueFrom = "arn:aws:secretsmanager:us-east-1:975049956608:secret:aurora/rsa-private-key-tE2Mfn"
         }
       ]
 
@@ -104,7 +128,7 @@ resource "aws_ecs_task_definition" "api" {
       }
 
       healthCheck = {
-        command     = ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+        command     = ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
         interval    = 30
         timeout     = 5
         retries     = 3
@@ -123,28 +147,28 @@ resource "aws_ecs_task_definition" "api" {
 # ========================================
 resource "aws_security_group" "api_ecs_tasks" {
   name        = "api-ecs-tasks-sg"
-  description = "Security group for API ECS tasks - allows traffic from private network"
+  description = "Security group for API ECS tasks - allows traffic from ALB"
   vpc_id      = var.vpc_id
 
-  # Permitir tr�fico en puerto 8080 desde el security group privado
+  # Permitir tráfico en puerto 8080 desde el ALB público
   ingress {
-    description     = "Spring Boot API from private network"
+    description     = "Spring Boot API from public ALB"
     from_port       = 8080
     to_port         = 8080
     protocol        = "tcp"
-    security_groups = [var.security_group_id]
+    security_groups = [var.public_security_group_id]
   }
 
-  # Permitir tr�fico desde el NLB (mismo security group)
+  # Permitir tráfico interno entre contenedores API
   ingress {
-    description = "Allow from NLB"
+    description = "Allow from same security group"
     from_port   = 8080
     to_port     = 8080
     protocol    = "tcp"
     self        = true
   }
 
-  # Salida: permitir todo el tr�fico saliente
+  # Salida: permitir todo el tráfico saliente
   egress {
     description = "Allow all outbound traffic"
     from_port   = 0
@@ -216,13 +240,13 @@ output "ecs_task_definition_arn" {
   value       = aws_ecs_task_definition.api.arn
 }
 
-output "nlb_dns_name" {
-  description = "DNS name of the Network Load Balancer (internal)"
+output "alb_dns_name" {
+  description = "DNS name of the Application Load Balancer (public)"
   value       = aws_lb.api.dns_name
 }
 
-output "nlb_arn" {
-  description = "ARN of the Network Load Balancer"
+output "alb_arn" {
+  description = "ARN of the Application Load Balancer"
   value       = aws_lb.api.arn
 }
 
