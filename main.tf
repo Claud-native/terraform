@@ -240,34 +240,42 @@ module "wireguard" {
   ami_id        = "ami-0360c520857e3138f"
   instance_type = "t3.micro"
   subnet_id     = aws_subnet.public.id
-  sg_id         = aws_security_group.public.id  
+  sg_id         = aws_security_group.public.id
   name          = "wg-ec2"
 }
 
 # ========================================
-# Nextcloud ECS Module
+# Nextcloud ECS Module (solo esta sección)
 # ========================================
-
-# Módulo Nextcloud
 module "nextcloud" {
   source = "./services/nextcloud"
 
+  # --- IAM roles (LabRole de AWS Academy) ---
   task_role_arn      = "arn:aws:iam::891377069738:role/LabRole"
+  execution_role_arn = "arn:aws:iam::891377069738:role/LabRole"
 
-  private_subnet_id  = aws_subnet.private.id
-  private_sg_id      = aws_security_group.private.id
+  # --- Networking ---
+  vpc_id            = aws_vpc.main.id
+  private_subnet_id = aws_subnet.private.id
+  private_sg_id     = aws_security_group.private.id
 
-  mariadb_image      = "pina123/my-mariadb:latest"
-  nextcloud_image    = "pina123/my-nextcloud-s3:latest"
+  # --- Imágenes: cambia a OFICIALES ---
+  mariadb_image   = "mariadb:10.11"       # oficial
+  nextcloud_image = "nextcloud:29-apache" # oficial (puedes poner "nextcloud:apache" o "nextcloud:30-apache" si prefieres)
 
-  db_name              = "nextcloud"
-  db_user              = "Almi"
-  db_root_password      = "Almi1234"
-  db_password           = "Almi1234"
-  nextcloud_admin_user  = "Almi"
+  # --- Credenciales DB / Admin Nextcloud (demo) ---
+  db_name                  = "nextcloud"
+  db_user                  = "Almi"
+  db_root_password         = "Almi1234"
+  db_password              = "Almi1234"
+  nextcloud_admin_user     = "Almi"
   nextcloud_admin_password = "Almi1234"
-  region                = "us-east-1"
-}
 
+  # --- Región ---
+  region = "us-east-1"
+
+  # --- Policies ---
+  attach_policies = false
+}
 
 
