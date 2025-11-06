@@ -82,7 +82,7 @@ resource "aws_iam_role_policy_attachment" "attach_s3_to_task_role" {
 resource "aws_iam_role_policy_attachment" "attach_ecs_execution" {
   count      = var.attach_policies ? 1 : 0
   role       = element(split("/", var.execution_role_arn), length(split("/", var.execution_role_arn)) - 1)
-  policy_arn = "arn:aws:iam::891377069738:role/LabRole"
+  policy_arn = "arn:aws:iam::704518799449:role/LabRole"
 }
 
 # ==========================
@@ -220,7 +220,6 @@ resource "aws_ecs_task_definition" "nextcloud" {
   name       = "db",
   image      = var.mariadb_image,
   essential  = true,
-  hostname   = "db",                         # <--- añade esto
   portMappings = [{ containerPort = 3306 }],
   environment = [
     { name = "MARIADB_ROOT_PASSWORD", value = var.db_root_password },
@@ -257,7 +256,7 @@ resource "aws_ecs_task_definition" "nextcloud" {
   ],
   portMappings = [{ containerPort = 80 }],
   environment = [
-    { name = "MYSQL_HOST",               value = "db" },        # <--- antes 127.0.0.1
+    { name = "MYSQL_HOST",               value = "127.0.0.1" },        # <--- antes 127.0.0.1
     { name = "MYSQL_PORT",               value = "3306" },      # <--- opcional
     { name = "MYSQL_DATABASE",           value = var.db_name },
     { name = "MYSQL_USER",               value = var.db_user },

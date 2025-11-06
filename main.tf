@@ -251,8 +251,8 @@ module "nextcloud" {
   source = "./services/nextcloud"
 
   # --- IAM roles (LabRole de AWS Academy) ---
-  task_role_arn      = "arn:aws:iam::891377069738:role/LabRole"
-  execution_role_arn = "arn:aws:iam::891377069738:role/LabRole"
+  task_role_arn      = "arn:aws:iam::704518799449:role/LabRole"
+  execution_role_arn = "arn:aws:iam::704518799449:role/LabRole"
 
   # --- Networking ---
   vpc_id            = aws_vpc.main.id

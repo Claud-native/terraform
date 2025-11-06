@@ -2,13 +2,13 @@
 variable "execution_role_arn" {
   description = "ARN del rol de ejecución ECS (pull de imagen y logs)"
   type        = string
-  default     = "arn:aws:iam::891377069738:role/LabRole"
+  default     = "arn:aws:iam::704518799449:role/LabRole"
 }
 
 variable "task_role_arn" {
   description = "ARN del rol que usan los contenedores (permisos runtime: S3, EFS, etc.)"
   type        = string
-  default     = "arn:aws:iam::891377069738:role/LabRole"
+  default     = "arn:aws:iam::704518799449:role/LabRole"
 }
 
 # Si NO usas LabRole admin y quieres adjuntar policies mínimas, pon true
