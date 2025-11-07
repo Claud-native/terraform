@@ -277,61 +277,61 @@ resource "aws_security_group" "private" {
 # MÓDULOS DE SERVICIOS PRINCIPALES
 # ========================================
 
-# WAF para protección web
-module "waf" {
-  source = "./services/waf"
-}
+# # WAF para protección web
+# module "waf" {
+#   source = "./services/waf"
+# }
 
-# API Backend
-module "api" {
-  source = "./services/api"
+# # API Backend
+# module "api" {
+#   source = "./services/api"
 
-  vpc_id                    = aws_vpc.main.id
-  private_subnet_ids        = [aws_subnet.private.id]
-  security_group_id         = aws_security_group.private.id
-  public_subnet_ids         = [aws_subnet.public_1.id, aws_subnet.public_2.id]
-  public_security_group_id  = aws_security_group.public.id
+#   vpc_id                    = aws_vpc.main.id
+#   private_subnet_ids        = [aws_subnet.private.id]
+#   security_group_id         = aws_security_group.private.id
+#   public_subnet_ids         = [aws_subnet.public_1.id, aws_subnet.public_2.id]
+#   public_security_group_id  = aws_security_group.public.id
 
-  # Database connection parameters
-  db_endpoint    = module.aurora.aurora_cluster_endpoint
-  db_port        = module.aurora.aurora_port
-  db_name        = module.aurora.database_name
-  db_username    = module.aurora.master_username
-  db_secret_arn  = module.aurora.secret_arn
-  jwt_secret_arn = module.aurora.jwt_secret_arn
+#   # Database connection parameters
+#   db_endpoint    = module.aurora.aurora_cluster_endpoint
+#   db_port        = module.aurora.aurora_port
+#   db_name        = module.aurora.database_name
+#   db_username    = module.aurora.master_username
+#   db_secret_arn  = module.aurora.secret_arn
+#   jwt_secret_arn = module.aurora.jwt_secret_arn
 
-  # CORS configuration - URL del balanceador web
-  cors_web_url   = "http://${module.web.alb_dns_name}"
-}
+#   # CORS configuration - URL del balanceador web
+#   cors_web_url   = "http://${module.web.alb_dns_name}"
+# }
 
-# Base de datos Aurora
-module "aurora" {
-  source = "./services/aurora"
+# # Base de datos Aurora
+# module "aurora" {
+#   source = "./services/aurora"
 
-  vpc_id                 = aws_vpc.main.id
-  private_subnet_ids     = [aws_subnet.private.id, aws_subnet.private_2.id]
-  api_security_group_id  = module.api.api_security_group_id
-  database_name          = "educloud"
-  master_username        = "admin"
-}
+#   vpc_id                 = aws_vpc.main.id
+#   private_subnet_ids     = [aws_subnet.private.id, aws_subnet.private_2.id]
+#   api_security_group_id  = module.api.api_security_group_id
+#   database_name          = "educloud"
+#   master_username        = "admin"
+# }
 
-# Frontend Web
-module "web" {
-  source = "./services/web"
+# # Frontend Web
+# module "web" {
+#   source = "./services/web"
 
-  vpc_id             = aws_vpc.main.id
-  public_subnet_ids  = [aws_subnet.public_1.id, aws_subnet.public_2.id]
-  security_group_id  = aws_security_group.public.id
-  api_url            = module.api.alb_dns_name
-}
+#   vpc_id             = aws_vpc.main.id
+#   public_subnet_ids  = [aws_subnet.public_1.id, aws_subnet.public_2.id]
+#   security_group_id  = aws_security_group.public.id
+#   api_url            = module.api.alb_dns_name
+# }
 
-# ========================================
-# ASOCIAR WAF CON ALB
-# ========================================
-resource "aws_wafv2_web_acl_association" "web_alb" {
-  resource_arn = module.web.alb_arn
-  web_acl_arn  = module.waf.waf_web_acl_arn
-}
+# # ========================================
+# # ASOCIAR WAF CON ALB
+# # ========================================
+# resource "aws_wafv2_web_acl_association" "web_alb" {
+#   resource_arn = module.web.alb_arn
+#   web_acl_arn  = module.waf.waf_web_acl_arn
+# }
 
 # ========================================
 # DATA SOURCES
@@ -378,21 +378,21 @@ module "nextcloud" {
 # ========================================
 # OUTPUTS - URLs PÚBLICAS
 # ========================================
-output "web_url" {
-  description = "URL pública de la aplicación web"
-  value       = "http://${module.web.alb_dns_name}"
-}
+# output "web_url" {
+#   description = "URL pública de la aplicación web"
+#   value       = "http://${module.web.alb_dns_name}"
+# }
 
-output "api_url" {
-  description = "URL pública de la API"
-  value       = "http://${module.api.alb_dns_name}"
-}
+# output "api_url" {
+#   description = "URL pública de la API"
+#   value       = "http://${module.api.alb_dns_name}"
+# }
 
-output "database_endpoint" {
-  description = "Endpoint de la base de datos Aurora (interno)"
-  value       = module.aurora.aurora_cluster_endpoint
-  sensitive   = true
-}
+# output "database_endpoint" {
+#   description = "Endpoint de la base de datos Aurora (interno)"
+#   value       = module.aurora.aurora_cluster_endpoint
+#   sensitive   = true
+# }
 
 output "wireguard_info" {
   description = "Información del servidor Wireguard VPN"
