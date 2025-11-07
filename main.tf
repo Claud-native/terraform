@@ -182,7 +182,7 @@ resource "aws_route_table_association" "private_2" {
 # Security Group Público
 resource "aws_security_group" "public" {
   name        = "public-sg"
-  description = "Security group for public subnet - allows HTTP, HTTPS and SSH from internet"
+  description = "Security group for public subnet - allows HTTP, HTTPS, SSH and Wireguard from internet"
   vpc_id      = aws_vpc.main.id
 
   # HTTP
@@ -209,6 +209,15 @@ resource "aws_security_group" "public" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Wireguard VPN
+  ingress {
+    description = "Wireguard VPN from internet"
+    from_port   = 51820
+    to_port     = 51820
+    protocol    = "udp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
@@ -264,11 +273,16 @@ resource "aws_security_group" "private" {
   }
 }
 
-# Modules
+# ========================================
+# MÓDULOS DE SERVICIOS PRINCIPALES
+# ========================================
+
+# WAF para protección web
 module "waf" {
   source = "./services/waf"
 }
 
+# API Backend
 module "api" {
   source = "./services/api"
 
@@ -290,6 +304,7 @@ module "api" {
   cors_web_url   = "http://${module.web.alb_dns_name}"
 }
 
+# Base de datos Aurora
 module "aurora" {
   source = "./services/aurora"
 
@@ -300,6 +315,7 @@ module "aurora" {
   master_username        = "admin"
 }
 
+# Frontend Web
 module "web" {
   source = "./services/web"
 
@@ -317,9 +333,47 @@ resource "aws_wafv2_web_acl_association" "web_alb" {
   web_acl_arn  = module.waf.waf_web_acl_arn
 }
 
-# module "wireguard" {
-#   source = "./services/wireguard"
-# }
+# ========================================
+# DATA SOURCES
+# ========================================
+data "aws_caller_identity" "current" {}
+
+data "aws_iam_role" "lab_role" {
+  name = "LabRole"
+}
+
+# ========================================
+# MÓDULOS DE NUEVOS SERVICIOS
+# ========================================
+
+# Módulo S3 para almacenamiento de Nextcloud
+module "s3" {
+  source = "./services/s3"
+
+  vpc_id          = aws_vpc.main.id
+  route_table_ids = [aws_route_table.private.id]
+  account_id      = data.aws_caller_identity.current.account_id
+  lab_role_arn    = data.aws_iam_role.lab_role.arn
+}
+
+# Módulo Wireguard VPN en subred pública
+module "wireguard" {
+  source = "./services/wireguard"
+
+  vpc_id             = aws_vpc.main.id
+  public_subnet_ids  = [aws_subnet.public_1.id, aws_subnet.public_2.id]
+}
+
+# Módulo Nextcloud en subred privada
+module "nextcloud" {
+  source = "./services/nextcloud"
+
+  vpc_id             = aws_vpc.main.id
+  private_subnet_ids = [aws_subnet.private.id, aws_subnet.private_2.id]
+  s3_bucket_name     = module.s3.bucket_name
+
+  depends_on = [module.s3]
+}
 
 # ========================================
 # OUTPUTS - URLs PÚBLICAS
@@ -338,4 +392,19 @@ output "database_endpoint" {
   description = "Endpoint de la base de datos Aurora (interno)"
   value       = module.aurora.aurora_cluster_endpoint
   sensitive   = true
+}
+
+output "wireguard_info" {
+  description = "Información del servidor Wireguard VPN"
+  value       = "Wireguard VPN desplegado. Conecta y accede a los recursos internos (puerto UDP 51820)"
+}
+
+output "nextcloud_info" {
+  description = "Información de Nextcloud"
+  value       = "Nextcloud accesible solo desde VPN en red privada (10.0.2.0/24 y 10.0.4.0/24)"
+}
+
+output "s3_bucket_name" {
+  description = "Nombre del bucket S3 para Nextcloud"
+  value       = module.s3.bucket_name
 }

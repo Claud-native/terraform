@@ -1,1 +1,0 @@
-# Despliege en EKS
