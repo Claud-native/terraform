@@ -49,7 +49,7 @@ resource "aws_ecs_task_definition" "web" {
   container_definitions = jsonencode([
     {
       name      = "web-container"
-      image     = "975049956608.dkr.ecr.us-east-1.amazonaws.com/react/web:latest"
+      image     = "891377069738.dkr.ecr.us-east-1.amazonaws.com/react/web:latest"
       essential = true
 
       environment = [

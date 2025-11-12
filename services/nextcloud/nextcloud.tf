@@ -116,11 +116,11 @@ resource "aws_instance" "nextcloud" {
     sleep 90
 
     # Configurar S3 como almacenamiento primario
-    cat > /tmp/s3config.php <<'S3CONFIG'
+    cat > /tmp/s3config.php <<S3CONFIG
     <?php
     \$CONFIG = array(
       'objectstore' => array(
-        'class' => '\\OC\\Files\\ObjectStore\\S3',
+        'class' => '\OC\Files\ObjectStore\S3',
         'arguments' => array(
           'bucket' => '${var.s3_bucket_name}',
           'autocreate' => false,

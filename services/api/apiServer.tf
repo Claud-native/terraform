@@ -49,7 +49,7 @@ resource "aws_ecs_task_definition" "api" {
   container_definitions = jsonencode([
     {
       name      = "api-container"
-      image     = "975049956608.dkr.ecr.us-east-1.amazonaws.com/react/api:latest"
+      image     = "891377069738.dkr.ecr.us-east-1.amazonaws.com/react/api:latest"
       essential = true
 
       environment = [
@@ -106,7 +106,7 @@ resource "aws_ecs_task_definition" "api" {
         },
         {
           name      = "RSA_PRIVATE_KEY"
-          valueFrom = "arn:aws:secretsmanager:us-east-1:975049956608:secret:aurora/rsa-private-key-kLVrxT"
+          valueFrom = "arn:aws:secretsmanager:us-east-1:891377069738:secret:aurora/rsa-private-key-aR0EyD"
         }
       ]
 
