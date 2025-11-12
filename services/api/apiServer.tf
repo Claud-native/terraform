@@ -106,7 +106,7 @@ resource "aws_ecs_task_definition" "api" {
         },
         {
           name      = "RSA_PRIVATE_KEY"
-          valueFrom = "arn:aws:secretsmanager:us-east-1:975049956608:secret:aurora/rsa-private-key-tE2Mfn"
+          valueFrom = "arn:aws:secretsmanager:us-east-1:975049956608:secret:aurora/rsa-private-key-kLVrxT"
         }
       ]
 
@@ -128,7 +128,7 @@ resource "aws_ecs_task_definition" "api" {
       }
 
       healthCheck = {
-        command     = ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+        command     = ["CMD-SHELL", "curl -f http://localhost:8080/api/health || exit 1"]
         interval    = 30
         timeout     = 5
         retries     = 3

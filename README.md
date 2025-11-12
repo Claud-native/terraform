@@ -263,3 +263,7 @@ terraform destroy
 ## Soporte
 
 Para issues o mejoras, contactar al equipo de infraestructura.
+
+
+#Deploy
+aws ecs update-service --cluster api-cluster --service api-service --force-new-deployment
