@@ -49,7 +49,7 @@ resource "aws_ecs_task_definition" "api" {
   container_definitions = jsonencode([
     {
       name      = "api-container"
-      image     = "975049956608.dkr.ecr.us-east-1.amazonaws.com/react/api:latest"
+      image     = "730335567858.dkr.ecr.us-east-1.amazonaws.com/react/api:latest"
       essential = true
 
       environment = [
@@ -88,6 +88,18 @@ resource "aws_ecs_task_definition" "api" {
         {
           name  = "JWT_EXPIRATION"
           value = "86400000"
+        },
+        {
+          name  = "VAPID_PUBLIC_KEY"
+          value = "BJJkwZE2XUxitGokg64ta2h5gWbPWo6tE7XtdQu-BA3naPwXqPDMw4dADaMkHBlZsYuRcXZ1hO1fHKerkI4cNG8"
+        },
+        {
+          name  = "VAPID_PRIVATE_KEY"
+          value = "dSOT3WKNbJcJvS3k74Ud3RoJDvLsenrqkOjNYBQtK1M"
+        },
+        {
+          name  = "VAPID_SUBJECT"
+          value = "mailto:admin@educloud.com"
         }
       ]
 
@@ -106,7 +118,7 @@ resource "aws_ecs_task_definition" "api" {
         },
         {
           name      = "RSA_PRIVATE_KEY"
-          valueFrom = "arn:aws:secretsmanager:us-east-1:975049956608:secret:aurora/rsa-private-key-tE2Mfn"
+          valueFrom = var.rsa_private_key_arn
         }
       ]
 

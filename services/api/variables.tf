@@ -64,6 +64,12 @@ variable "jwt_secret_arn" {
   default     = ""
 }
 
+variable "rsa_private_key_arn" {
+  description = "ARN of the RSA private key secret"
+  type        = string
+  default     = ""
+}
+
 variable "cors_web_url" {
   description = "URL del balanceador de carga web para CORS"
   type        = string

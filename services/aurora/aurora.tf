@@ -57,6 +57,23 @@ resource "aws_secretsmanager_secret_version" "jwt_secret" {
 }
 
 # ========================================
+# SECRETS MANAGER - RSA Private Key
+# ========================================
+resource "aws_secretsmanager_secret" "rsa_private_key" {
+  name                    = "aurora/rsa-private-key"
+  recovery_window_in_days = 0
+
+  tags = {
+    Name = "rsa-private-key"
+  }
+}
+
+resource "aws_secretsmanager_secret_version" "rsa_private_key" {
+  secret_id     = aws_secretsmanager_secret.rsa_private_key.id
+  secret_string = var.rsa_private_key
+}
+
+# ========================================
 # DB SUBNET GROUP
 # ========================================
 resource "aws_db_subnet_group" "aurora" {
@@ -237,4 +254,9 @@ output "aurora_security_group_id" {
 output "jwt_secret_arn" {
   description = "ARN of the JWT secret"
   value       = aws_secretsmanager_secret.jwt_secret.arn
+}
+
+output "rsa_private_key_arn" {
+  description = "ARN of the RSA private key secret"
+  value       = aws_secretsmanager_secret.rsa_private_key.arn
 }

@@ -279,12 +279,13 @@ module "api" {
   public_security_group_id  = aws_security_group.public.id
 
   # Database connection parameters
-  db_endpoint    = module.aurora.aurora_cluster_endpoint
-  db_port        = module.aurora.aurora_port
-  db_name        = module.aurora.database_name
-  db_username    = module.aurora.master_username
-  db_secret_arn  = module.aurora.secret_arn
-  jwt_secret_arn = module.aurora.jwt_secret_arn
+  db_endpoint         = module.aurora.aurora_cluster_endpoint
+  db_port             = module.aurora.aurora_port
+  db_name             = module.aurora.database_name
+  db_username         = module.aurora.master_username
+  db_secret_arn       = module.aurora.secret_arn
+  jwt_secret_arn      = module.aurora.jwt_secret_arn
+  rsa_private_key_arn = module.aurora.rsa_private_key_arn
 
   # CORS configuration - URL del balanceador web
   cors_web_url   = "http://${module.web.alb_dns_name}"
