@@ -49,7 +49,7 @@ resource "aws_ecs_task_definition" "web" {
   container_definitions = jsonencode([
     {
       name      = "web-container"
-      image     = "975049956608.dkr.ecr.us-east-1.amazonaws.com/react/web:latest"
+      image     = "730335567858.dkr.ecr.us-east-1.amazonaws.com/react/web:latest"
       essential = true
 
       environment = [
@@ -59,7 +59,7 @@ resource "aws_ecs_task_definition" "web" {
         },
         {
           name  = "VITE_RSA_PUBLIC_KEY"
-          value = "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0QFwed5G4KLpGKa9a4GQ\nRZrxRffPBF6yPNrNG5p6wg36CQM8IsoJ5Hwdgq82XPVk9jn1QR4zYbZMIw30TDeH\n+jAcGA2YO6YxPHpa0zvlaE/45wuXUNHhUM07uOP1xowbRyHAAuzYdV1jkTMdCjn9\nfJPP0F796iF5aRs4nxXUF5cVqDUUIlJwBJMa3q2h4lQ+3FGILJBhJzUKk6oRaAvZ\nuEs1ndz+ugLVC1kDwOLG5qRT/zcnPsITVLeWkJ0DXLWqQWlLqlugEJ0ncPON4CuU\nn0yobbJ8aiL/Ymu8FF7DzN1GILL4kGD6Pc/iPvfWdBUDSuhMLGuXyR/CzLy304j1\nfQIDAQAB\n-----END PUBLIC KEY-----"
+          value = "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApegM4A9fO613uDi8L3Z6\n8k1WXxrDODwg6b9m4ZWrt9eJt5RQPlHpyYZjUWKQeTSa8WYFeVIMiMeXXEa+feDx\nslBE2ByUjxCfjZyvWfEifhsXhV/ZgBncsU8XGT0bnK+nYsJvodtRbtLicr28ZGsy\n61gnlmrLahe1uuKlPvYVcOiYZEcB9ifS7ZT/ywpP96XbNmb9LY3lQqE8incBCC83\nPMltxQTarfO4B8xPYiGp6Ui3kSroHtnMuM8aj98IPWYJOvr/Yzi04rJ4hnJD92e5\nMJWVO825B435KnQdzAedQulKQcfJihRlzC4fOCm1AS/P4kRbVzto6iG74dF7rEMI\n5wIDAQAB\n-----END PUBLIC KEY-----"
         },
         {
           name  = "VITE_AES_SECRET_KEY"
